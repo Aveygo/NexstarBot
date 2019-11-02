@@ -30,4 +30,4 @@ def getForcast():
         print (weather.get_reference_time('iso'),weather.get_clouds())
 
 print(getWeather()['humi'])
-#test 2
+#test 2eif
