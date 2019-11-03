@@ -19,4 +19,3 @@ def alignImage(imagepath, radius=21): #returns relative to center
     offset = (center[0]-maxLoc[0], center[1]-maxLoc[1])
     return offset
 
-print(alignImage('stars.jpg'))

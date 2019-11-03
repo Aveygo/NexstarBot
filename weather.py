@@ -2,8 +2,16 @@
 # the weather is good enough for astrophotography.
 
 import pyowm
+import configparser 
+
+config = configparser.ConfigParser()
+config.read('config.ini')
+
 owm = pyowm.OWM("85b7235ca94da8d941ddfc41f9cd7e51")
-observation = owm.weather_at_place("North Sydney, AU")
+
+latitude = float(config.get('location', 'lat'))
+longitude = float(config.get('location', 'long'))
+observation = owm.weather_at_coords(latitude, longitude)
 
 threashold = 75
 
@@ -34,18 +42,17 @@ def getForcast():
     for weather in f:
         print (weather.get_reference_time('iso'),weather.get_clouds())
 
-def weatherStatus():
+def weatherStatus(threash = threashold):
     weather = getWeather()
     covr = weather['covr']
     humi = weather['humi']
+    wind = weather['wind']
     try:
         rain = int(weather['rain'])
     except:
         rain = 0
-    weatherScore = (int(covr) + int(humi)) * (int(rain) + 1)
-    if weatherScore < threashold:
+    weatherScore = (int(covr) + int(humi)) * (int(rain) + 1) + wind
+    if weatherScore < threash:
         return True
     else:
         return False
-
-

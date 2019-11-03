@@ -1,15 +1,35 @@
 # Basic controls of Nexstar celestron series, time and location set is probably broken and change com port if needed.
 # Is 
 
-timezone = -10 #From UTC
-# TODO - location
-
-import serial, time, keyboard
+import serial, time, math
 from datetime import datetime
+import configparser 
 
-ser = serial.Serial("COM3")
-ser.open()
-ser.isOpen()
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+defaultport = str(config.get('comport', 'port'))
+
+def connect(port = defaultport):
+	try:
+		ser = serial.Serial(port)
+		ser.open()
+		ser.isOpen()
+		return True
+	except:
+		return False
+
+def isConnected():
+	try:
+		command = ("K" + chr('x') + "\r")
+		ser.write(command.encode())
+		response = ser.read(2).decode("utf-8")
+		if response=="x#":
+			return True
+		else: 
+			return False
+	except:
+		return False
 
 def getPos():	#returns ALT/AZ
 	command = ("Z\r")
@@ -28,14 +48,14 @@ def gotoAltAzi(Alt, Azi):	# Decimal
 	Azi = format(int(Azi/360*65536), '04X')
 	command = ("B" + str(Azi) + "," + str(Alt))
 	ser.write(command.encode())
-	response = ser.read(1)
+	ser.read(1)
 
 def gotoRaDec(Ra, Dec):	# Decimal
 	Ra = format(int(Ra/360*65536), '04X')
 	Dec = format(int(Dec/360*65536), '04X')
 	command = ("R" + str(Ra) + "," + str(Dec))
 	ser.write(command.encode())
-	response = ser.read(1)
+	ser.read(1)
 
 def azmPos(rate): # In the 0.0.1 update, Needs to convert degrees to arc seconds
 	rate = rate * 3600
@@ -43,7 +63,7 @@ def azmPos(rate): # In the 0.0.1 update, Needs to convert degrees to arc seconds
 	rateLow = int((rate/4) % 256)
 	command = ('P' + chr(3) + chr(16) + chr(6) + chr(rateHigh) + chr(rateLow) + chr(0) + chr(0))
 	ser.write(command.encode())
-	response = ser.read()
+	ser.read()
 
 def azmNeg(rate):
 	rate = rate * 3600
@@ -51,7 +71,7 @@ def azmNeg(rate):
 	rateLow = int((rate/4) % 256)
 	command = ('P' + chr(3) + chr(16) + chr(7) + chr(rateHigh) + chr(rateLow) + chr(0) + chr(0))
 	ser.write(command.encode())
-	response = ser.read()
+	ser.read()
 
 def altPos(rate):
 	rate = rate * 3600
@@ -59,7 +79,7 @@ def altPos(rate):
 	rateLow = int((rate/4) % 256)
 	command = ('P' + chr(3) + chr(17) + chr(6) + chr(rateHigh) + chr(rateLow) + chr(0) + chr(0))
 	ser.write(command.encode())
-	response = ser.read()
+	ser.read()
 
 def altNeg(rate):
 	rate = rate * 3600
@@ -67,7 +87,7 @@ def altNeg(rate):
 	rateLow = int((rate/4) % 256)
 	command = ('P' + chr(3) + chr(17) + chr(7) + chr(rateHigh) + chr(rateLow) + chr(0) + chr(0))
 	ser.write(command.encode())
-	response = ser.read()
+	ser.read()
 
 '''	#Broken!!!
 def setTimeNow(): 
@@ -82,22 +102,34 @@ def setTimeNow():
     command = ('H' + chr(Q) + chr(R) + chr(S) + chr(T) + chr(U) + chr(V) + chr(W) + chr(X))
     ser.write(command.encode())
 '''
-def setLocationHere(): #151.13.19 S , -33.46.50 E
-    A = 33
-    B = 46
-    C = 50
-    D = 1
-    E = 151
-    F = 13
-    G = 19
-    H = 0
-    command = ('W' + chr(A) + chr(B) + chr(C) + chr(D) + chr(E) + chr(F) + chr(G) + chr(H))
-    ser.write(command.encode())
-    
 
+def setLocationHere(): 
+	latitude = float(config.get('location', 'lat'))
+	longitude = float(config.get('location', 'long'))
 
+	A = int(math.floor(abs(latitude)))
+	B = round(abs(latitude)-A, 5)*60
+	C = int(round(B % 1,5)*60)
 
-        
+	B = int(math.floor(B))
+	
+	if latitude > 0:
+		D = 1
+	else:
+		D = 0
 
+	E = int(math.floor(abs(longitude)))
+	F = round(abs(longitude)-E, 5)*60
+	G = int(round(F % 1,5)*60)
 
+	F = int(math.floor(F))
 
+	if longitude > 0:
+		H = 1
+	else:
+		H = 0	
+	
+	command = ('W' + chr(A) + chr(B) + chr(C) + chr(D) + chr(E) + chr(F) + chr(G) + chr(H))
+	ser.write(command.encode())
+	
+setLocationHere()

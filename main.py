@@ -1,9 +1,11 @@
-import weather
+import weather, aligner, nexstarControls
 import configparser 
 
 config = configparser.ConfigParser()
 
 config.read('config.ini')
 
-test = config.get('DF settings', 'shutter')
-print(test)
+targetName = config.get('target', 'name')
+targetRA = config.get('target', 'ra')
+targetDEC = config.get('target', 'dec')
+
