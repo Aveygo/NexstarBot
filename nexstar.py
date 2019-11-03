@@ -11,13 +11,10 @@ config.read('config.ini')
 defaultport = str(config.get('comport', 'port'))
 
 def connect(port = defaultport):
-	try:
-		ser = serial.Serial(port)
-		ser.open()
-		ser.isOpen()
-		return True
-	except:
-		return False
+	ser = serial.Serial(port)
+	ser.open()
+	ser.isOpen()
+
 
 def isConnected():
 	try:
@@ -31,6 +28,11 @@ def isConnected():
 	except:
 		return False
 
+def setTrackingMode(mode=1):	#0=off 1=ALT/AZ 2=EQNorth 3=EQSouth
+	command = ("T" + chr(mode))
+	ser.write(command.encode())
+	ser.read()
+
 def getPos():	#returns ALT/AZ
 	command = ("Z\r")
 	ser.write(command.encode())
@@ -43,21 +45,21 @@ def getPos():	#returns ALT/AZ
 	alt = int(alt, 16)/65536*360
 	return alt, azi
 
-def gotoAltAzi(Alt, Azi):	# Decimal
+def gotoAltAzi(Alt, Azi):	# Decimal -90,90 0,360
 	Alt = format(int(Alt/360*65536), '04X')
 	Azi = format(int(Azi/360*65536), '04X')
 	command = ("B" + str(Azi) + "," + str(Alt))
 	ser.write(command.encode())
 	ser.read(1)
 
-def gotoRaDec(Ra, Dec):	# Decimal
+def gotoRaDec(Ra, Dec):	# Decimal 
 	Ra = format(int(Ra/360*65536), '04X')
 	Dec = format(int(Dec/360*65536), '04X')
 	command = ("R" + str(Ra) + "," + str(Dec))
 	ser.write(command.encode())
 	ser.read(1)
 
-def azmPos(rate): # In the 0.0.1 update, Needs to convert degrees to arc seconds
+def azmPos(rate): 
 	rate = rate * 3600
 	rateHigh = int((rate/4) / 256)
 	rateLow = int((rate/4) % 256)
@@ -132,4 +134,3 @@ def setLocationHere():
 	command = ('W' + chr(A) + chr(B) + chr(C) + chr(D) + chr(E) + chr(F) + chr(G) + chr(H))
 	ser.write(command.encode())
 	
-setLocationHere()
