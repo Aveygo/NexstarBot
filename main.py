@@ -17,6 +17,7 @@ except:
 
 
 if not nexstar.isConnected():
+    #nexstar.connect()
     try:
         nexstar.connect()
     except:
@@ -33,18 +34,21 @@ print("")
 print("Target:\t" + targetName)
 
 while True:
-    try:
-        while not weather.weatherStatus():
-            print("Waiting for better weather conditions...")
-            nexstar.setTrackingMode(0)
-            nexstar.gotoAltAzi(0,0)
-            time.sleep(600)
+    #try:
+    while not weather.weatherStatus():
+        print("Waiting for better weather conditions...")
+        nexstar.setTrackingMode(0)
+        pos = (round(nexstar.getAltAzi()[0]), round(nexstar.getAltAzi()[1]))
+        if not pos == (-90,90):
+            nexstar.gotoAltAzi(-90,90)
+            print(pos)
+        time.sleep(20)
             
-    except:
+    '''except:
         print("May not be connected to internet...")
         nexstar.setTrackingMode(0)
         nexstar.gotoAltAzi(0,0)
-        time.sleep(600)
+        time.sleep(600)'''
     
     
         

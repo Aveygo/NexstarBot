@@ -8,15 +8,22 @@ import configparser
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-defaultport = str(config.get('comport', 'port'))
+global port
+port = str(config.get('comport', 'port'))
 
-def connect(port = defaultport):
-	ser = serial.Serial(port)
-	ser.open()
-	ser.isOpen()
-
-
+def connect(port = port):
+	try:
+		ser = serial.Serial(port)
+		ser.open()
+		ser.isOpen()
+	except:
+		ser = serial.Serial(port)
+		ser.close()
+		ser.open()
+		ser.isOpen()
+		
 def isConnected():
+	ser = serial.Serial(port)
 	try:
 		command = ("K" + chr('x') + "\r")
 		ser.write(command.encode())
@@ -29,11 +36,13 @@ def isConnected():
 		return False
 
 def setTrackingMode(mode=1):	#0=off 1=ALT/AZ 2=EQNorth 3=EQSouth
+	ser = serial.Serial(port)
 	command = ("T" + chr(mode))
 	ser.write(command.encode())
 	ser.read()
 
-def getPos():	#returns ALT/AZ
+def getAltAzi():	#returns ALT/AZ
+	ser = serial.Serial(port)
 	command = ("Z\r")
 	ser.write(command.encode())
 	response = ser.read(10).decode("utf-8")
@@ -46,6 +55,7 @@ def getPos():	#returns ALT/AZ
 	return alt, azi
 
 def gotoAltAzi(Alt, Azi):	# Decimal -90,90 0,360
+	ser = serial.Serial(port)
 	Alt = format(int(Alt/360*65536), '04X')
 	Azi = format(int(Azi/360*65536), '04X')
 	command = ("B" + str(Azi) + "," + str(Alt))
@@ -53,6 +63,7 @@ def gotoAltAzi(Alt, Azi):	# Decimal -90,90 0,360
 	ser.read(1)
 
 def gotoRaDec(Ra, Dec):	# Decimal 
+	ser = serial.Serial(port)
 	Ra = format(int(Ra/360*65536), '04X')
 	Dec = format(int(Dec/360*65536), '04X')
 	command = ("R" + str(Ra) + "," + str(Dec))
@@ -60,6 +71,7 @@ def gotoRaDec(Ra, Dec):	# Decimal
 	ser.read(1)
 
 def azmPos(rate): 
+	ser = serial.Serial(port)
 	rate = rate * 3600
 	rateHigh = int((rate/4) / 256)
 	rateLow = int((rate/4) % 256)
@@ -68,6 +80,7 @@ def azmPos(rate):
 	ser.read()
 
 def azmNeg(rate):
+	ser = serial.Serial(port)
 	rate = rate * 3600
 	rateHigh = int((rate/4) / 256)
 	rateLow = int((rate/4) % 256)
@@ -76,6 +89,7 @@ def azmNeg(rate):
 	ser.read()
 
 def altPos(rate):
+	ser = serial.Serial(port)
 	rate = rate * 3600
 	rateHigh = int((rate/4) / 256)
 	rateLow = int((rate/4) % 256)
@@ -84,6 +98,7 @@ def altPos(rate):
 	ser.read()
 
 def altNeg(rate):
+	ser = serial.Serial(port)
 	rate = rate * 3600
 	rateHigh = int((rate/4) / 256)
 	rateLow = int((rate/4) % 256)
@@ -106,6 +121,7 @@ def setTimeNow():
 '''
 
 def setLocationHere(): 
+	ser = serial.Serial(port)
 	latitude = float(config.get('location', 'lat'))
 	longitude = float(config.get('location', 'long'))
 
