@@ -1,5 +1,5 @@
 import weather, aligner, nexstar
-import configparser, time
+import configparser, time, socket, ping
 
 config = configparser.ConfigParser()
 
@@ -17,7 +17,6 @@ except:
 
 
 if not nexstar.isConnected():
-    #nexstar.connect()
     try:
         nexstar.connect()
     except:
@@ -33,24 +32,58 @@ else:
 print("")
 print("Target:\t" + targetName)
 
+def testInternet():
+    try:
+        ping.verbose_ping('www.google.com', count=3)
+        delay = ping.Ping('www.wikipedia.org', timeout=2000).do()
+    except socket.error, e:
+
+        time.sleep(600)
+
+def pointDown():
+    nexstar.setTrackingMode(0)
+    pos = (round(nexstar.getAltAzi()[0]), round(nexstar.getAltAzi()[1]))
+    #if not already pointing down, point down
+    if not pos == (-90,90):                     #An error either on line 41 or 42 (may not return proper position)
+        nexstar.gotoAltAzi(-90,90) 
+
 while True:
-    #try:
-    while not weather.weatherStatus():
-        print("Waiting for better weather conditions...")
-        nexstar.setTrackingMode(0)
-        pos = (round(nexstar.getAltAzi()[0]), round(nexstar.getAltAzi()[1]))
-        if not pos == (-90,90):
-            nexstar.gotoAltAzi(-90,90)
-            print(pos)
-        time.sleep(20)
-            
-    '''except:
-        print("May not be connected to internet...")
-        nexstar.setTrackingMode(0)
-        nexstar.gotoAltAzi(0,0)
-        time.sleep(600)'''
-    
-    
+    #test weather
+    try:    
+        #while the weather is not good enough, point telescope down and wait till next best moment
+        while not weather.weatherStatus():
+            print("Waiting for better weather conditions...")
+            pointDown()
+            time.sleep(600) 
+
+    #If the weather cannot be sourced...
+    except:
+            try:
+                #Test internet connection
+                print("Testing internet connection...")
+                pointDown()
+                if testInternet():
+                    print("Cannot connect to weather open map!")
+                    print("The API key might be wrong...")
+                else:
+                    print("Device offline, please connect...")
+            except:
+                try:
+                    print("Testing device connection...")
+                    if nexstar.isConnected():
+                        print("FATAL ERROR: I have no idea what happened")
+                    else:
+                        print("Device was found to not be connected!")
+                        print("Connecting...")
+                        try:
+                            nexstar.connect()
+                        except:
+                            print("Cannot connect to telescope.")
+                            print("FATAL ERROR: I have no idea what happened")
+                    
+                
+        
+
         
     
 
