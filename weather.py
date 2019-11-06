@@ -13,7 +13,7 @@ latitude = float(config.get('location', 'lat'))
 longitude = float(config.get('location', 'long'))
 observation = owm.weather_at_coords(latitude, longitude)
 
-threashold = 75
+threashold = 85
 
 def getWeather():
     weather = observation.get_weather()
@@ -55,4 +55,4 @@ def weatherStatus(threash = threashold):
     if weatherScore < threash:
         return True
     else:
-        return False
+        return False, weatherScore

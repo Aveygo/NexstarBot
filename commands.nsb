@@ -1,0 +1,8 @@
+BEGIN
+SAY hello!
+WAIT 1
+SAY goodbye!
+LOOP A 2
+SAY loop de loop
+ENDLOOP A
+END
