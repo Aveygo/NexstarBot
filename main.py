@@ -1,4 +1,4 @@
-import weather, aligner, nexstar
+from libraries import weather, aligner, nexstar, instructor
 import configparser, time, urllib
 
 config = configparser.ConfigParser()
@@ -6,7 +6,6 @@ config = configparser.ConfigParser()
 try:
     config.read('config.ini')
     targetName = config.get('target', 'name')
-    targetMin = config.get('target', 'minHeight')
     targetRA = config.get('target', 'ra')
     targetDEC = config.get('target', 'dec')
 except:
@@ -60,47 +59,115 @@ def readCommands():
     while not f.readline(1) == "END":
         commands.append(f.readline(1))
 
-while True:
-    #test weather
-    try:    
-        #while the weather is not good enough, point telescope down and wait till next best moment
-        while not weather.weatherStatus():
-            print("Waiting for better weather conditions...")
-            pointDown()
-            time.sleep(600) 
-
-    #If the weather cannot be sourced...
+def debug():
+    try:
+        print("Testing internet connection...")
+        if testInternet():
+            print("Cannot connect to weather open map!")
+            print("The API key might be wrong...")
+        else:
+            print("Device offline, please connect...")
     except:
+        print("Testing device connection...")
+        if nexstar.isConnected():
+            print("FATAL ERROR: I have no idea what happened")
+        else:
+            print("Device was found to not be connected!")
+            print("Connecting...")
             try:
-                #Test internet connection
-                print("Testing internet connection...")
-                pointDown()
-                if testInternet():
-                    print("Cannot connect to weather open map!")
-                    print("The API key might be wrong...")
-                else:
-                    print("Device offline, please connect...")
+                nexstar.connect()
             except:
-                #Test if telescope is conneced
-                print("Testing device connection...")
-                if nexstar.isConnected():
-                    print("FATAL ERROR: I have no idea what happened")
-                else:
-                    print("Device was found to not be connected!")
-                    print("Connecting...")
-                    try:
-                        nexstar.connect()
-                    except:
-                        print("Telescope refuses to connect...")
-                        print("FATAL ERROR: I have no idea why this happened")
+                print("Telescope refuses to connect...")
+                print("FATAL ERROR: I have no idea why this happened")
 
-    
-                    
-                
+
+def genCommands():
+    commandsClean = []
+    try:
+        commands = []
+        line = f.readline()
+        while not line == "END":
+            commands.append(line)
+            line = f.readline()
+
+        commands.append(line)
+
+        for i in range(0, len(commands)):
+            commands[i] = commands[i].rstrip("\n")
+            
+        commands = commands[1:-1]
+
+        for i in range(0, len(commands)):
+            instruction = commands[i].split(" ")[0]
+            detail = commands[i].split(" ")[1]
+
+            if instruction == "SAY":
+                detail = commands[i].split("SAY")[1][1:]
+                commandsClean.append([instruction, detail])
+
+            elif instruction == "WAIT":
+                commandsClean.append([instruction, int(detail)])
+
+            elif instruction == "PHOTO":
+                for i in range(0, int(detail)):
+                    commandsClean.append([instruction, int(detail)])
+
+            elif instruction == "TIME":
+                detail = commands[i].split("TIME")[1][1:]
+
+                daily = detail.split(" ")[0]
+
+                year = daily.split(':')[0]
+                month = daily.split(':')[1]
+                day = daily.split(':')[2]
+
+                hourly = detail.split(" ")[1]
+                hour = hourly.split(':')[0]
+                minute = hourly.split(':')[1]
+
+                specificTime = datetime.datetime(int(year), int(month), int(day), int(hour), int(minute))
+                commandsClean.append([instruction, specificTime])
+    except:
+        return False
+
+    return commandsClean 
+
+################################ START CODE ########################################
+
+global weatherStatus
+
+commands = genCommands()
+if commands == False:
+    print("Error while commands were read, please check for errors!")
+    quit()
+
+currentCommandLine = 0
+
+def runningWeatherDetection():
+    while True:
+        try:    
+            while not weather.weatherStatus():
+                print("Waiting for better weather conditions...")
+                weatherStatus = False
+                pointDown()
+                time.sleep(600) 
+            weatherStatus = True    
+        except:
+            pointDown()
+            weatherStatus = False
+            debug()
+
+
+def runningTelescopeBot():    
+    while weatherStatus:
+        #TODO - read the list commands starting from currentCommandLine and do them, and once a command is complete add one to cuurentCommandLine if it's not too long
+        #TODO - add multiple targets in config and be able to slew to them in commands (SLEW <target>) 
         
 
-        
-    
 
 
-    
+
+
+
+
+
