@@ -23,8 +23,8 @@ def connect(port = port):
 		ser.isOpen()
 		
 def isConnected():
-	ser = serial.Serial(port)
 	try:
+		ser = serial.Serial(port)
 		command = ("K" + chr('x') + "\r")
 		ser.write(command.encode())
 		response = ser.read(2).decode("utf-8")
@@ -105,6 +105,15 @@ def altNeg(rate):
 	command = ('P' + chr(3) + chr(17) + chr(7) + chr(rateHigh) + chr(rateLow) + chr(0) + chr(0))
 	ser.write(command.encode())
 	ser.read()
+
+def isGoto():
+	ser = serial.Serial(port)
+	command = ("L")
+	ser.write(command.encode())
+	if int(ser.read()):
+		return True
+	else:
+		return False
 
 '''	#Broken!!!
 def setTimeNow(): 

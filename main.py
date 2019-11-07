@@ -1,16 +1,45 @@
-from libraries import weather, aligner, nexstar, instructor
-import configparser, time, urllib
+from libraries import weather, aligner, nexstar
+import configparser, time, urllib, datetime
 
 config = configparser.ConfigParser()
 
+targetlist = []
+
 try:
-    config.read('config.ini')
-    targetName = config.get('target', 'name')
-    targetRA = config.get('target', 'ra')
-    targetDEC = config.get('target', 'dec')
+    config.read('config.ini')    
+    targetName = config.get('TARGET1', 'name')
+    targetRA = config.get('TARGET1', 'ra')
+    targetDEC = config.get('TARGET1', 'dec')
+    targetlist.append([targetName, targetRA, targetDEC])
 except:
     print("Currupt config file!")
     print("Basic target information missing")
+    print("Variable names may have been tampered with")
+    quit()
+
+for i in range(2, 100):
+    try:
+        targetID = "TARGET" + str(i)
+        targetName = config.get(targetID, 'name')
+        targetRA = config.get(targetID, 'ra')
+        targetDEC = config.get(targetID, 'dec')
+        targetlist.append([targetName, targetRA, targetDEC])
+    except:
+        break
+
+print("")
+print("Following targets detected:")
+for i in range(0, len(targetlist)):
+    print("\t " + targetlist[i][0])
+print("")
+
+try:
+    cameraShutter = config.get('camera settings', 'shutter')
+    cameraISO = config.get('camera settings', 'iso')
+    cameraDelay = config.get('camera settings', 'delay')
+except:
+    print("Currupt config file!")
+    print("Basic camera settings missing")
     print("Variable names may have been tampered with")
     quit()
 
@@ -24,6 +53,8 @@ except:
 
 
 if not nexstar.isConnected():
+    print("Connecting to telescope")
+    print("")
     try:
         nexstar.connect()
     except:
@@ -36,8 +67,6 @@ if not nexstar.isConnected():
 else:
     print("Connection made with telecope...")
 
-print("")
-print("Target:\t" + targetName)
 
 def testInternet():
     try:
@@ -53,11 +82,6 @@ def pointDown():
     #if not already pointing down, point down
     if not pos == (-90,90):                     #An error either on line 41 or 42 (may not return proper position)
         nexstar.gotoAltAzi(-90,90) 
-
-def readCommands():
-    commands = []
-    while not f.readline(1) == "END":
-        commands.append(f.readline(1))
 
 def debug():
     try:
@@ -112,6 +136,9 @@ def genCommands():
                 for i in range(0, int(detail)):
                     commandsClean.append([instruction, int(detail)])
 
+            elif instruction == "SLEW":
+                commandsClean.append([instruction, detail])
+
             elif instruction == "TIME":
                 detail = commands[i].split("TIME")[1][1:]
 
@@ -160,9 +187,27 @@ def runningWeatherDetection():
 
 def runningTelescopeBot():    
     while weatherStatus:
-        #TODO - read the list commands starting from currentCommandLine and do them, and once a command is complete add one to cuurentCommandLine if it's not too long
-        #TODO - add multiple targets in config and be able to slew to them in commands (SLEW <target>) 
+        action = commands.curentCommandLine[0]
+        info = commands.curentCommandLine[1]
+
+        if action == "SAY":
+            print(info)
+
+        if action == "WAIT":
+            time.sleep(info)
         
+        if action == "PHOTO":
+            camcontrol.takephoto(cameraShutter, cameraISO, cameraDelay)
+            time.sleep(cameraShutter + cameraDelay)
+
+        if action == "SLEW":
+            targetNum = detail.replace("TARGET", "")
+            ra = targetlist[targetNum][1]
+            dec = targetlist[targetNum][2]
+            nexstar.gotoRaDec(ra, dec)
+
+            while nexstar.isGoto():
+                time.sleep(1)
 
 
 
