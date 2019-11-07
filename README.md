@@ -1,21 +1,28 @@
 # NexstarBot
-Currently this bot is in it's early stages and is fairly unusable. If needed, within the libraries folder, there are some scripts 
-that might help your project such as serial commands and weather detection.
+A bot that can automatically handle current weather conditions, an easy to write script to direct the telescope without needing to wake up in the middle of the night, and libraries to move into your current projects if nessesary.
+Runs on Python3.6+.
+## Dependancies
+* Configparser
+* Urllib
 
-The aim is to make a python script that will read and run commands from an instruction file to control a Nexstar 
-series telescope and a gphoto2 compatable camera. It will also be able to detect weather conditions and if they are too poor, 
-will currently slew the telescope down and set it in hibernation mode.
+## Customising
+NexstarBot requires the user to instuct on what it must do inside commands.nsb and also requires configuration details inside config.ini
+### Config.ini
+Inside config.ini you will see targets, cammera settings, location, comport, and the path to instructions.nsb
 
-The instruction file should be written with the following stucture:
+#### Adding targets
 
-The file must begin and end as such
-BEGIN
-...
-END
+[TARGET + #] 
 
-Commands are currently;
-SAY <string>                                    Will print string
-WAIT <seconds (integer)>                        Will wait some amount of time
-TIME <year>:<month>:<day> <hour>:<minute>       Will wait till specified time
-PHOTO <amount (integers)                        Take specified amount of photos
-SLEW <target name (string)>                     Slews to RA DEC of target in config.ini file
+name = Example
+
+ra = -12.345
+
+dec = 67.8901
+
+
+## Running
+As simple as
+'''
+python main.py
+'''
