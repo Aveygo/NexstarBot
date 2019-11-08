@@ -1,4 +1,10 @@
-from libraries import weather, aligner, nexstar
+try:
+    from libraries import weather, aligner, nexstar
+except:
+    print("Libraies that came with main.py are missing!")
+    print("Either reinstall them or make sure that they are in the folder libraries/")
+    quit()
+
 import configparser, time, urllib, datetime
 
 config = configparser.ConfigParser()
@@ -184,11 +190,15 @@ def runningWeatherDetection():
             weatherStatus = False
             debug()
 
+weatherStatus = True
+failedShots = 0
+takenShots = 0
+print("Please note that the camera should be in bulb mode!")
 
 def runningTelescopeBot():    
     while weatherStatus:
-        action = commands.curentCommandLine[0]
-        info = commands.curentCommandLine[1]
+        action = commands[curentCommandLine][0]
+        info = commands[curentCommandLine][1]
 
         if action == "SAY":
             print(info)
@@ -197,8 +207,13 @@ def runningTelescopeBot():
             time.sleep(info)
         
         if action == "PHOTO":
-            camcontrol.takephoto(cameraShutter, cameraISO, cameraDelay)
-            time.sleep(cameraShutter + cameraDelay)
+            if camcontrol.takephoto(cameraShutter, cameraISO, cameraDelay):
+                print("Photo taken successfully!")
+                takenShots += 1
+            else:
+                print("Photo could not be taken!")
+                print("Is camera in bulb mode and attached via USB?")
+                failedShots += 1
 
         if action == "SLEW":
             targetNum = detail.replace("TARGET", "")
@@ -209,6 +224,17 @@ def runningTelescopeBot():
             while nexstar.isGoto():
                 time.sleep(1)
 
+        curentCommandLine += 1
+        
+        if currentCommandLine == len(commands):
+            shotsTotal = takenShots + failedShots
+            shotsPercent = takenShots * 100 / shotsTotal
+            print(str(shotsPercent) + "% of shots taken without error")
+            print("Finished commands")
+            print("Pointing down...")
+            pointDown()
+
+runningTelescopeBot()
 
 
 
